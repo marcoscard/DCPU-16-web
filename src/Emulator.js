@@ -55,7 +55,7 @@ class Emulator {
     getSpecialInstruction(binary) {
         return {
             opcode: (binary & 0x3ff),
-            a: this.addressFor((binary >> 10) & 0x3f)
+            a: this.addressFor({ value: (binary >> 10) & 0x3f, isA: true })
             //TODO addressfor
         }
     }
@@ -63,13 +63,13 @@ class Emulator {
     getInstruction(binary) {
         return {
             opcode: (binary & 0x1f),
-            a: this.addressFor((binary >> 10) & 0x3f),
-            b: this.addressFor((binary >> 5) & 0x1f)
+            a: this.addressFor({ value: (binary >> 10) & 0x3f, isA: true }),
+            b: this.addressFor({ value: (binary >> 5) & 0x1f, isA: false })
             // TODO addressfor
         }
     }
 
-    addressFor(value) {
+    addressFor({ value,isA}) {
         var register, address
         if( value <= 0x7){
             register = this.registers[value]
@@ -81,8 +81,32 @@ class Emulator {
             var nextInstruction = this.memory[this.memory.pc++]
             address = (nextInstruction + this.memory[register])
         }
+        else if ( value === 0x19) {
+            var sp = this.memory.sp
+            return this.memory[sp]
+        } 
+        else if ( value === 0x1a) {
+            var nextInstruction = this.memory[this.memory.pc++]
+            var sp = this.memory.sp
+            return address = (nextInstruction + this.memory[nextInstruction + sp])
+        } 
+        else if ( value === 0x1b) {
+            return this.memory.sp
+        }
+        else if ( value === 0x1c) {
+            return this.memory.pc
+        }
+        else if ( value === 0x1d ) {
+            return this.memory.ex
+        }
+        else if ( value === 0x1e) {
+            return this.memory[this.memory.pc++]
+        }
+        else if ( value === 0x1f) {
+            //TODO
+        }
         else if ( value === 0x18) {
-
+            //TODO
         }
         
     }

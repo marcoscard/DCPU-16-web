@@ -30,10 +30,11 @@ class Emulator {
     }
 
     decode(binary) {
+        let instruction
         if ((binary & 0x1f) === 0) {
-            let instruction = this.getSpecialInstruction(binary)
+            instruction = this.getSpecialInstruction(binary)
         } else {
-            let instruction = this.getInstruction(binary)
+            instruction = this.getInstruction(binary)
         }
         return instruction
     }
@@ -56,7 +57,6 @@ class Emulator {
         return {
             opcode: (binary & 0x3ff),
             a: this.addressFor({ value: (binary >> 10) & 0x3f, isA: true })
-            //TODO addressfor
         }
     }
 
@@ -89,11 +89,11 @@ class Emulator {
         switch (value) {
             case 0x18:
                 if (isA) {
-                    sp = this.memory.sp++
+                    let sp = this.memory.sp++
                     return this.memory[sp]
                 }
                 else {
-                    sp = this.memory.sp - 1
+                    let sp = this.memory.sp - 1
                     return this.memory[sp]
                 }
 

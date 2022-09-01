@@ -74,13 +74,13 @@ class Emulator {
             return register
         }
         else if (value <= 0x0f) {
-            let binary = this.memory[value % 8]
-            return binary
+            let register = this.registers[value - 0x8]
+            return this.memory[register]
         }
         else if (value <= 0x17) {
             let nextInstruction = this.fetchInstruction()
-            let binary = (nextInstruction + this.memory[register])
-            return binary
+            let register = this.registers[value - 0x10]
+            return (nextInstruction + this.memory[register])
         }
         else if (value >= 0x20 && value <= 0x3f) {
             let literal = value - 0x21

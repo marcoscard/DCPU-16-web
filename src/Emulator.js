@@ -10,6 +10,7 @@ class Emulator {
         this.cycle = 0
         this.memory.sp = 0
         this.memory.ex = 0
+        this.memory.ia = 0
         this.skipNext = false
     }
 
@@ -18,7 +19,6 @@ class Emulator {
 
             let instruction = this.fetchInstruction()
             let decodedInstruction = this.decode(instruction)
-            //CHAIN METHODS
             this.execute(decodedInstruction)
         }
     }
@@ -42,218 +42,229 @@ class Emulator {
 
     execute(decodedBinary) {
         let a = decodedBinary.a
-        let b = decodedBinary.b
+        let b = (decodedBinary.b) ? decodedBinary.b : undefined
+        let opcode = decodedBinary.opcode
 
-        switch (decodedBinary.opcode) {
-            case OPCODES.SET:
-                this.cycle += 1
-                this.set(b, a)
+        if (b != undefined) {
+            switch (opcode) {
+                case OPCODES.SET:
+                    this.cycle += 1
+                    this.set(b, a)
 
-            case OPCODES.ADD:
-                this.cycle += 2
-                tmp = a + b
-                if (tmp > 0xffff) {
-                    this.memory.ex = 0x0001
-                } else {
-                    this.memory.ex = 0x0000
-                }
+                case OPCODES.ADD:
+                    this.cycle += 2
+                    tmp = a + b
+                    if (tmp > 0xffff) {
+                        this.memory.ex = 0x0001
+                    } else {
+                        this.memory.ex = 0x0000
+                    }
 
-            case OPCODES.SUB:
-                this.cycle += 2
-                tmp = a - b
-                if (tmp < 0) {
-                    this.memory.ex = 0xffff
-                } else {
-                    this.memory.ex = 0x0000
-                }
+                case OPCODES.SUB:
+                    this.cycle += 2
+                    tmp = a - b
+                    if (tmp < 0) {
+                        this.memory.ex = 0xffff
+                    } else {
+                        this.memory.ex = 0x0000
+                    }
 
-            case OPCODES.MUL:
-                this.cycle += 2
-                tmp = a * b
-                this.memory.ex = (tmp >> 16) & 0xffff
-                this.set(b, tmp)
-
-            case OPCODES.MLI:
-                this.cycle += 2
-                a = ~a + 1
-                tmp = a * b
-                this.memory.ex = (tmp >> 16) & 0xffff
-                this.set(b, tmp)
-
-            case OPCODES.DIV:
-                this.cycle += 3
-                if (a == 0) {
-                    this.memory.ex = 0x0000
-                } else {
-                    tmp = b / a
-                    this.memory.ex = ((b << 16) / a) & 0xffff
+                case OPCODES.MUL:
+                    this.cycle += 2
+                    tmp = a * b
+                    this.memory.ex = (tmp >> 16) & 0xffff
                     this.set(b, tmp)
-                }
 
-            case OPCODES.DVI:
-                this.cycle += 3
-                a = ~a + 1
-                if (a == 0) {
-                    this.memory.ex = 0x0000
-                } else {
-                    tmp = b / a
-                    this.memory.ex = ((b << 16) / a) & 0xffff
+                case OPCODES.MLI:
+                    this.cycle += 2
+                    a = ~a + 1
+                    tmp = a * b
+                    this.memory.ex = (tmp >> 16) & 0xffff
                     this.set(b, tmp)
-                }
 
-            case OPCODES.MOD:
-                this.cycle += 3
-                if (a == 0) {
-                    this.set(b, 0)
-                } else {
-                    this.set(b, b % a)
-                }
+                case OPCODES.DIV:
+                    this.cycle += 3
+                    if (a == 0) {
+                        this.memory.ex = 0x0000
+                    } else {
+                        tmp = b / a
+                        this.memory.ex = ((b << 16) / a) & 0xffff
+                        this.set(b, tmp)
+                    }
 
-            case OPCODES.MDI:
-                this.cycle += 3
-                a = ~a + 1
-                if (a == 0) {
-                    this.set(b, 0)
-                } else {
-                    this.set(b, b % a)
-                }
+                case OPCODES.DVI:
+                    this.cycle += 3
+                    a = ~a + 1
+                    if (a == 0) {
+                        this.memory.ex = 0x0000
+                    } else {
+                        tmp = b / a
+                        this.memory.ex = ((b << 16) / a) & 0xffff
+                        this.set(b, tmp)
+                    }
 
-            case OPCODES.AND:
-                this.cycle += 1
-                this.set(b, a & b)
+                case OPCODES.MOD:
+                    this.cycle += 3
+                    if (a == 0) {
+                        this.set(b, 0)
+                    } else {
+                        this.set(b, b % a)
+                    }
 
-            case OPCODES.BOR:
-                this.cycle += 1
-                this.set(b, a | b)
+                case OPCODES.MDI:
+                    this.cycle += 3
+                    a = ~a + 1
+                    if (a == 0) {
+                        this.set(b, 0)
+                    } else {
+                        this.set(b, b % a)
+                    }
 
-            case OPCODES.XOR:
-                this.cycle += 1
-                this.set(b, a ^ b)
-
-            case OPCODES.SHR:
-                this.cycle += 1
-                tmp = b >>> a
-                this.memory.ex = ((b << 16) >>> a) & 0xffff
-                this.set(b, tmp)
-
-            case OPCODES.ASR:
-                this.cycle += 1
-                b = ~b + 1
-                tmp = b >> a
-                this.memory.ex = ((b << 16) >>> a) & 0xffff
-                this.set(b, tmp)
-
-            case OPCODES.SHL:
-                this.cycle += 1
-                tmp = b << a
-                this.memory.ex = (tmp >> 16) & 0xffff
-                this.set(b, tmp)
-
-            case OPCODES.IFB:
-                this.cycle += 2
-                if ((b & a) != 0) {
-                    this.memory.pc++
-                } else {
+                case OPCODES.AND:
                     this.cycle += 1
-                    this.skipNext = true
-                }
+                    this.set(b, a & b)
 
-            case OPCODES.IFC:
-                this.cycle += 2
-                if ((b & a) == 0) {
-                    this.memory.pc++
-                } else {
+                case OPCODES.BOR:
                     this.cycle += 1
-                    this.skipNext = true
-                }
+                    this.set(b, a | b)
 
-            case OPCODES.IFE:
-                this.cycle += 2
-                if (b == a) {
-                    this.memory.pc++
-                } else {
+                case OPCODES.XOR:
                     this.cycle += 1
-                    this.skipNext = true
-                }
+                    this.set(b, a ^ b)
 
-            case OPCODES.IFN:
-                this.cycle += 2
-                if (b != a) {
-                    this.memory.pc++
-                } else {
+                case OPCODES.SHR:
                     this.cycle += 1
-                    this.skipNext = true
-                }
+                    tmp = b >>> a
+                    this.memory.ex = ((b << 16) >>> a) & 0xffff
+                    this.set(b, tmp)
 
-            case OPCODES.IFG:
-                this.cycle += 2
-                if (b > a) {
-                    this.memory.pc++
-                } else {
+                case OPCODES.ASR:
                     this.cycle += 1
-                    this.skipNext = true
-                }
+                    b = ~b + 1
+                    tmp = b >> a
+                    this.memory.ex = ((b << 16) >>> a) & 0xffff
+                    this.set(b, tmp)
 
-            case OPCODES.IFA:
-                this.cycle += 2
-                b = ~b + 1
-                a = ~a + 1
-                if (b > a) {
-                    this.memory.pc++
-                } else {
+                case OPCODES.SHL:
                     this.cycle += 1
-                    this.skipNext = true
-                }
+                    tmp = b << a
+                    this.memory.ex = (tmp >> 16) & 0xffff
+                    this.set(b, tmp)
 
-            case OPCODES.IFL:
-                this.cycle += 2
-                if (b < a) {
-                    this.memory.pc++
-                } else {
-                    this.cycle += 1
-                    this.skipNext = true
-                }
+                case OPCODES.IFB:
+                    this.cycle += 2
+                    if ((b & a) != 0) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
 
-            case OPCODES.IFU:
-                this.cycle += 2
-                b = ~b + 1
-                a = ~a + 1
-                if (b < a) {
-                    this.memory.pc++
-                } else {
-                    this.cycle += 1
-                    this.skipNext = true
-                }
+                case OPCODES.IFC:
+                    this.cycle += 2
+                    if ((b & a) == 0) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
 
-            case OPCODES.ADX:
-                this.cycle += 3
-                tmp = b + a + this.memory.ex
-                if (tmp > 0xffff) {
-                    this.memory.ex = 0x0001
-                } else {
-                    this.memory.ex = 0x0000
-                }
+                case OPCODES.IFE:
+                    this.cycle += 2
+                    if (b == a) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
 
-            case OPCODES.SBX:
-                this.cycle += 3
-                tmp = b - a + this.memory.ex
-                if (tmp < 0) {
-                    this.memory.ex = 0xffff
-                } else {
-                    this.memory.ex = 0x0000
-                }
+                case OPCODES.IFN:
+                    this.cycle += 2
+                    if (b != a) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
 
-            case OPCODES.STI:
-                this.cycle += 2
-                this.set(b, a)
-                this.memory.I++
-                this.memory.J++
+                case OPCODES.IFG:
+                    this.cycle += 2
+                    if (b > a) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
 
-            case OPCODES.STD:
-                this.cycle += 2
-                this.set(b, a)
-                this.memory.I--
-                this.memory.J--
+                case OPCODES.IFA:
+                    this.cycle += 2
+                    b = ~b + 1
+                    a = ~a + 1
+                    if (b > a) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
+
+                case OPCODES.IFL:
+                    this.cycle += 2
+                    if (b < a) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
+
+                case OPCODES.IFU:
+                    this.cycle += 2
+                    b = ~b + 1
+                    a = ~a + 1
+                    if (b < a) {
+                        this.memory.pc++
+                    } else {
+                        this.cycle += 1
+                        this.skipNext = true
+                    }
+
+                case OPCODES.ADX:
+                    this.cycle += 3
+                    tmp = b + a + this.memory.ex
+                    if (tmp > 0xffff) {
+                        this.memory.ex = 0x0001
+                    } else {
+                        this.memory.ex = 0x0000
+                    }
+
+                case OPCODES.SBX:
+                    this.cycle += 3
+                    tmp = b - a + this.memory.ex
+                    if (tmp < 0) {
+                        this.memory.ex = 0xffff
+                    } else {
+                        this.memory.ex = 0x0000
+                    }
+
+                case OPCODES.STI:
+                    this.cycle += 2
+                    this.set(b, a)
+                    this.memory.I++
+                    this.memory.J++
+
+                case OPCODES.STD:
+                    this.cycle += 2
+                    this.set(b, a)
+                    this.memory.I--
+                    this.memory.J--
+            }
+        } else {
+            switch (opcode) {
+                case OPCODES.JSR:
+                    this.cycle += 3
+                    this.memory.sp--
+                    this.set(this.memory.sp, this.memory.pc)
+                    this.memory.pc = a
+            }
         }
     }
 

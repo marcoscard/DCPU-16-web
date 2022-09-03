@@ -40,119 +40,124 @@ class Emulator {
     }
 
     execute(decodedBinary) {
-        let a = decodedBinary.a
-        let b = (decodedBinary.b) ? decodedBinary.b : undefined
+        let aVal = this.get(decodedBinary.aVal)
+        let bVal = (decodedBinary.b) ? this.get(decodedBinary.b) : undefined
         let opcode = decodedBinary.opcode
 
-        if (b != undefined) {
+        if (decodedBinary.b != undefined) {
             switch (opcode) {
                 case OPCODES.SET:
                     this.cycle += 1
-                    this.set(b, a)
+                    this.set(decodedBinary.b, aVal)
 
                 case OPCODES.ADD:
                     this.cycle += 2
-                    tmp = a + b
+                    tmp = aVal + bVal
                     if (tmp > 0xffff) {
                         this.EX = 0x0001
                     } else {
                         this.EX = 0x0000
                     }
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.SUB:
                     this.cycle += 2
-                    tmp = a - b
+                    tmp = aVal - bVal
                     if (tmp < 0) {
                         this.EX = 0xffff
                     } else {
                         this.EX = 0x0000
                     }
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.MUL:
                     this.cycle += 2
-                    tmp = a * b
+                    tmp = aVal * bVal
                     this.EX = (tmp >> 16) & 0xffff
-                    this.set(b, tmp)
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.MLI:
                     this.cycle += 2
-                    a = ~a + 1
-                    tmp = a * b
+                    aVal = ~aVal + 1
+                    bVal = ~bVal + 1
+                    tmp = aVal * bVal
                     this.EX = (tmp >> 16) & 0xffff
-                    this.set(b, tmp)
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.DIV:
                     this.cycle += 3
-                    if (a == 0) {
+                    if (aVal == 0) {
                         this.EX = 0x0000
                     } else {
-                        tmp = b / a
-                        this.EX = ((b << 16) / a) & 0xffff
-                        this.set(b, tmp)
+                        tmp = bVal / aVal
+                        this.EX = ((bVal << 16) / aVal) & 0xffff
+                        this.set(decodedBinary.b, tmp)
                     }
 
                 case OPCODES.DVI:
                     this.cycle += 3
-                    a = ~a + 1
-                    if (a == 0) {
+                    aVal = ~aVal + 1
+                    bVal = ~bVal + 1
+                    if (aVal == 0) {
                         this.EX = 0x0000
                     } else {
-                        tmp = b / a
-                        this.EX = ((b << 16) / a) & 0xffff
-                        this.set(b, tmp)
+                        tmp = bVal / aVal
+                        this.EX = ((bVal << 16) / aVal) & 0xffff
+                        this.set(decodedBinary.b, tmp)
                     }
 
                 case OPCODES.MOD:
                     this.cycle += 3
-                    if (a == 0) {
-                        this.set(b, 0)
+                    if (aVal == 0) {
+                        this.set(decodedBinary.b, 0)
                     } else {
-                        this.set(b, b % a)
+                        this.set(decodedBinary.b, bVal % aVal)
                     }
 
                 case OPCODES.MDI:
                     this.cycle += 3
-                    a = ~a + 1
-                    if (a == 0) {
-                        this.set(b, 0)
+                    aVal = ~aVal + 1
+                    bVal = ~bVal + 1
+                    if (aVal == 0) {
+                        this.set(decodedBinary.b, 0)
                     } else {
-                        this.set(b, b % a)
+                        this.set(decodedBinary.b, bVal % aVal)
                     }
 
                 case OPCODES.AND:
                     this.cycle += 1
-                    this.set(b, a & b)
+                    this.set(decodedBinary.b, aVal & bVal)
 
                 case OPCODES.BOR:
                     this.cycle += 1
-                    this.set(b, a | b)
+                    this.set(decodedBinary.b, aVal | bVal)
 
                 case OPCODES.XOR:
                     this.cycle += 1
-                    this.set(b, a ^ b)
+                    this.set(decodedBinary.b, aVal ^ bVal)
 
                 case OPCODES.SHR:
                     this.cycle += 1
-                    tmp = b >>> a
-                    this.EX = ((b << 16) >>> a) & 0xffff
-                    this.set(b, tmp)
+                    tmp = bVal >>> aVal
+                    this.EX = ((bVal << 16) >>> aVal) & 0xffff
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.ASR:
                     this.cycle += 1
-                    b = ~b + 1
-                    tmp = b >> a
-                    this.EX = ((b << 16) >>> a) & 0xffff
-                    this.set(b, tmp)
+                    bVal = ~bVal + 1
+                    tmp = bVal >> aVal
+                    this.EX = ((bVal << 16) >>> aVal) & 0xffff
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.SHL:
                     this.cycle += 1
-                    tmp = b << a
+                    tmp = bVal << aVal
                     this.EX = (tmp >> 16) & 0xffff
-                    this.set(b, tmp)
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.IFB:
                     this.cycle += 2
-                    if ((b & a) != 0) {
+                    if ((bVal & aVal) != 0) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -161,7 +166,7 @@ class Emulator {
 
                 case OPCODES.IFC:
                     this.cycle += 2
-                    if ((b & a) == 0) {
+                    if ((bVal & aVal) == 0) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -170,7 +175,7 @@ class Emulator {
 
                 case OPCODES.IFE:
                     this.cycle += 2
-                    if (b == a) {
+                    if (bVal == aVal) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -179,7 +184,7 @@ class Emulator {
 
                 case OPCODES.IFN:
                     this.cycle += 2
-                    if (b != a) {
+                    if (bVal != aVal) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -188,7 +193,7 @@ class Emulator {
 
                 case OPCODES.IFG:
                     this.cycle += 2
-                    if (b > a) {
+                    if (bVal > aVal) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -197,9 +202,9 @@ class Emulator {
 
                 case OPCODES.IFA:
                     this.cycle += 2
-                    b = ~b + 1
-                    a = ~a + 1
-                    if (b > a) {
+                    bVal = ~bVal + 1
+                    aVal = ~aVal + 1
+                    if (bVal > aVal) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -208,7 +213,7 @@ class Emulator {
 
                 case OPCODES.IFL:
                     this.cycle += 2
-                    if (b < a) {
+                    if (bVal < aVal) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -217,9 +222,9 @@ class Emulator {
 
                 case OPCODES.IFU:
                     this.cycle += 2
-                    b = ~b + 1
-                    a = ~a + 1
-                    if (b < a) {
+                    bVal = ~bVal + 1
+                    aVal = ~aVal + 1
+                    if (bVal < aVal) {
                         this.memory.pc++
                     } else {
                         this.cycle += 1
@@ -228,31 +233,33 @@ class Emulator {
 
                 case OPCODES.ADX:
                     this.cycle += 3
-                    tmp = b + a + this.EX
+                    tmp = bVal + aVal + this.EX
                     if (tmp > 0xffff) {
                         this.EX = 0x0001
                     } else {
                         this.EX = 0x0000
                     }
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.SBX:
                     this.cycle += 3
-                    tmp = b - a + this.EX
+                    tmp = bVal - aVal + this.EX
                     if (tmp < 0) {
                         this.EX = 0xffff
                     } else {
                         this.EX = 0x0000
                     }
+                    this.set(decodedBinary.b, tmp)
 
                 case OPCODES.STI:
                     this.cycle += 2
-                    this.set(b, a)
+                    this.set(decodedBinary.b, aVal)
                     this.memory.I++
                     this.memory.J++
 
                 case OPCODES.STD:
                     this.cycle += 2
-                    this.set(b, a)
+                    this.set(decodedBinary.b, aVal)
                     this.memory.I--
                     this.memory.J--
             }
@@ -262,7 +269,7 @@ class Emulator {
                     this.cycle += 3
                     this.SP--
                     this.set(this.SP, this.memory.pc)
-                    this.memory.pc = a
+                    this.memory.pc = aVal
             }
         }
     }

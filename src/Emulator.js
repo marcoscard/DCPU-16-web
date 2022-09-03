@@ -8,15 +8,14 @@ class Emulator {
         this.memory.length = this.ramSize
         this.registers = ["A", "B", "C", "X", "Y", "Z", "I", "J"]
         this.cycle = 0
-        this.memory.sp = 0
-        this.memory.ex = 0
-        this.memory.ia = 0
+        this.SP = 0
+        this.EX = 0
+        this.IA = 0
         this.skipNext = false
     }
 
     run() {
         for (let i = 0; i < Infinity; i++) {
-
             let instruction = this.fetchInstruction()
             let decodedInstruction = this.decode(instruction)
             this.execute(decodedInstruction)
@@ -55,40 +54,40 @@ class Emulator {
                     this.cycle += 2
                     tmp = a + b
                     if (tmp > 0xffff) {
-                        this.memory.ex = 0x0001
+                        this.EX = 0x0001
                     } else {
-                        this.memory.ex = 0x0000
+                        this.EX = 0x0000
                     }
 
                 case OPCODES.SUB:
                     this.cycle += 2
                     tmp = a - b
                     if (tmp < 0) {
-                        this.memory.ex = 0xffff
+                        this.EX = 0xffff
                     } else {
-                        this.memory.ex = 0x0000
+                        this.EX = 0x0000
                     }
 
                 case OPCODES.MUL:
                     this.cycle += 2
                     tmp = a * b
-                    this.memory.ex = (tmp >> 16) & 0xffff
+                    this.EX = (tmp >> 16) & 0xffff
                     this.set(b, tmp)
 
                 case OPCODES.MLI:
                     this.cycle += 2
                     a = ~a + 1
                     tmp = a * b
-                    this.memory.ex = (tmp >> 16) & 0xffff
+                    this.EX = (tmp >> 16) & 0xffff
                     this.set(b, tmp)
 
                 case OPCODES.DIV:
                     this.cycle += 3
                     if (a == 0) {
-                        this.memory.ex = 0x0000
+                        this.EX = 0x0000
                     } else {
                         tmp = b / a
-                        this.memory.ex = ((b << 16) / a) & 0xffff
+                        this.EX = ((b << 16) / a) & 0xffff
                         this.set(b, tmp)
                     }
 
@@ -96,10 +95,10 @@ class Emulator {
                     this.cycle += 3
                     a = ~a + 1
                     if (a == 0) {
-                        this.memory.ex = 0x0000
+                        this.EX = 0x0000
                     } else {
                         tmp = b / a
-                        this.memory.ex = ((b << 16) / a) & 0xffff
+                        this.EX = ((b << 16) / a) & 0xffff
                         this.set(b, tmp)
                     }
 
@@ -135,20 +134,20 @@ class Emulator {
                 case OPCODES.SHR:
                     this.cycle += 1
                     tmp = b >>> a
-                    this.memory.ex = ((b << 16) >>> a) & 0xffff
+                    this.EX = ((b << 16) >>> a) & 0xffff
                     this.set(b, tmp)
 
                 case OPCODES.ASR:
                     this.cycle += 1
                     b = ~b + 1
                     tmp = b >> a
-                    this.memory.ex = ((b << 16) >>> a) & 0xffff
+                    this.EX = ((b << 16) >>> a) & 0xffff
                     this.set(b, tmp)
 
                 case OPCODES.SHL:
                     this.cycle += 1
                     tmp = b << a
-                    this.memory.ex = (tmp >> 16) & 0xffff
+                    this.EX = (tmp >> 16) & 0xffff
                     this.set(b, tmp)
 
                 case OPCODES.IFB:
@@ -229,20 +228,20 @@ class Emulator {
 
                 case OPCODES.ADX:
                     this.cycle += 3
-                    tmp = b + a + this.memory.ex
+                    tmp = b + a + this.EX
                     if (tmp > 0xffff) {
-                        this.memory.ex = 0x0001
+                        this.EX = 0x0001
                     } else {
-                        this.memory.ex = 0x0000
+                        this.EX = 0x0000
                     }
 
                 case OPCODES.SBX:
                     this.cycle += 3
-                    tmp = b - a + this.memory.ex
+                    tmp = b - a + this.EX
                     if (tmp < 0) {
-                        this.memory.ex = 0xffff
+                        this.EX = 0xffff
                     } else {
-                        this.memory.ex = 0x0000
+                        this.EX = 0x0000
                     }
 
                 case OPCODES.STI:
@@ -261,8 +260,8 @@ class Emulator {
             switch (opcode) {
                 case OPCODES.JSR:
                     this.cycle += 3
-                    this.memory.sp--
-                    this.set(this.memory.sp, this.memory.pc)
+                    this.SP--
+                    this.set(this.SP, this.memory.pc)
                     this.memory.pc = a
             }
         }
@@ -304,30 +303,30 @@ class Emulator {
         switch (value) {
             case 0x18:
                 if (isA) {
-                    let sp = this.memory.sp++
+                    let sp = this.SP++
                     return this.memory[sp]
                 }
                 else {
-                    let sp = this.memory.sp - 1
+                    let sp = this.SP - 1
                     return this.memory[sp]
                 }
 
             case 0x19:
-                return this.memory[this.memory.sp]
+                return this.memory[this.SP]
 
             case 0x1a:
                 var nextInstruction = this.memory[this.memory.pc++]
-                let sp = this.memory.sp
+                let sp = this.SP
                 return address = this.memory[sp + nextInstruction]
 
             case 0x1b:
-                return this.memory.sp
+                return this.SP
 
             case 0x1c:
                 return this.memory.pc
 
             case 0x1d:
-                return this.memory.ex
+                return this.EX
 
             case 0x1e:
                 var nextInstruction = this.fetchInstruction()

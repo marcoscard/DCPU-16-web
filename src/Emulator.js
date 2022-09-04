@@ -269,7 +269,7 @@ class Emulator {
                 case OPCODES.JSR:
                     this.cycle += 3
                     this.SP--
-                    this.set(this.SP, this.PC)
+                    this.SP = this.PC++
                     this.PC = aVal
             }
         }

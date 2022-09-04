@@ -275,6 +275,13 @@ class Emulator {
         }
     }
 
+    set(key, value) {
+        if (typeof key == 'string') {
+            this.registers[key] = value
+        }
+        this[key] = value
+    }
+
     getSpecialInstruction(binary) {
         return {
             opcode: (binary & 0x3ff),

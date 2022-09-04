@@ -261,8 +261,8 @@ class Emulator {
                 case OPCODES.STD:
                     this.cycle += 2
                     this.set(decodedBinary.b, aVal)
-                    this.memory.I--
-                    this.memory.J--
+                    this.registers.I--
+                    this.registers.J--
             }
         } else {
             switch (opcode) {

@@ -8,6 +8,7 @@ class Emulator {
         this.memory.length = this.ramSize
         this.registers = ["A", "B", "C", "X", "Y", "Z", "I", "J"]
         this.cycle = 0
+        this.PC = 0
         this.SP = 0
         this.EX = 0
         this.IA = 0
@@ -23,7 +24,7 @@ class Emulator {
     }
 
     fetchInstruction() {
-        let pc = this.memory.pc
+        let pc = this.PC
         let instruction = this.memory[pc++]
         this.cycle++
         return instruction
@@ -158,7 +159,7 @@ class Emulator {
                 case OPCODES.IFB:
                     this.cycle += 2
                     if ((bVal & aVal) != 0) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -167,7 +168,7 @@ class Emulator {
                 case OPCODES.IFC:
                     this.cycle += 2
                     if ((bVal & aVal) == 0) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -176,7 +177,7 @@ class Emulator {
                 case OPCODES.IFE:
                     this.cycle += 2
                     if (bVal == aVal) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -185,7 +186,7 @@ class Emulator {
                 case OPCODES.IFN:
                     this.cycle += 2
                     if (bVal != aVal) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -194,7 +195,7 @@ class Emulator {
                 case OPCODES.IFG:
                     this.cycle += 2
                     if (bVal > aVal) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -205,7 +206,7 @@ class Emulator {
                     bVal = ~bVal + 1
                     aVal = ~aVal + 1
                     if (bVal > aVal) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -214,7 +215,7 @@ class Emulator {
                 case OPCODES.IFL:
                     this.cycle += 2
                     if (bVal < aVal) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -225,7 +226,7 @@ class Emulator {
                     bVal = ~bVal + 1
                     aVal = ~aVal + 1
                     if (bVal < aVal) {
-                        this.memory.pc++
+                        this.PC++
                     } else {
                         this.cycle += 1
                         this.skipNext = true
@@ -268,8 +269,8 @@ class Emulator {
                 case OPCODES.JSR:
                     this.cycle += 3
                     this.SP--
-                    this.set(this.SP, this.memory.pc)
-                    this.memory.pc = aVal
+                    this.set(this.SP, this.PC)
+                    this.PC = aVal
             }
         }
     }
@@ -322,7 +323,7 @@ class Emulator {
                 return this.memory[this.SP]
 
             case 0x1a:
-                var nextInstruction = this.memory[this.memory.pc++]
+                var nextInstruction = this.memory[this.PC++]
                 let sp = this.SP
                 return address = this.memory[sp + nextInstruction]
 
@@ -330,7 +331,7 @@ class Emulator {
                 return this.SP
 
             case 0x1c:
-                return this.memory.pc
+                return this.PC
 
             case 0x1d:
                 return this.EX
